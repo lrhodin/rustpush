@@ -1,5 +1,5 @@
 
-mod activation;
+pub mod activation;
 mod aps;
 mod util;
 mod imessage;

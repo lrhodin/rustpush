@@ -2594,13 +2594,27 @@ impl MessageInst {
             return wrapper.to_message(None, Message::RecoverChat(loaded.recover_chat_metadata_array.into_iter().next().unwrap()))
         }
         if let Ok(loaded) = plist::from_value::<RawUnsendMessage>(&value) {
-            return wrapper.to_message(None, Message::Unsend(UnsendMessage { tuuid: loaded.message, edit_part: loaded.part_index }));
+            let conv = match (wrapper.sender.as_ref(), wrapper.target.as_ref()) {
+                (Some(s), Some(t)) => Some(ConversationData {
+                    participants: vec![s.clone(), t.clone()],
+                    cv_name: None, sender_guid: None, after_guid: None,
+                }),
+                _ => None,
+            };
+            return wrapper.to_message(conv, Message::Unsend(UnsendMessage { tuuid: loaded.message, edit_part: loaded.part_index }));
         }
         if let Ok(loaded) = plist::from_value::<RawUpdateExtensionMessage>(&value) {
             return wrapper.to_message(None, Message::UpdateExtension(UpdateExtensionMessage { for_uuid: loaded.target_id, ext: plist::from_value(&loaded.new_info)? }));
         }
         if let Ok(loaded) = plist::from_value::<RawEditMessage>(&value) {
-            return wrapper.to_message(None, Message::Edit(EditMessage {
+            let conv = match (wrapper.sender.as_ref(), wrapper.target.as_ref()) {
+                (Some(s), Some(t)) => Some(ConversationData {
+                    participants: vec![s.clone(), t.clone()],
+                    cv_name: None, sender_guid: None, after_guid: None,
+                }),
+                _ => None,
+            };
+            return wrapper.to_message(conv, Message::Edit(EditMessage {
                 tuuid: loaded.message,
                 edit_part: loaded.part_index,
                 new_parts: MessageParts::parse_parts(&loaded.new_html_body, None)
